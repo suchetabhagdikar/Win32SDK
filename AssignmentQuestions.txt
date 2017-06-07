@@ -1,0 +1,7 @@
+Assignment Questions -
+
+1. Show All Messages of SDK using MessageBox API.
+
+2. Show Color changing Window on particular Key pressed.
+
+3.2. Show Color changing Window on particular Key pressed also showing Full Screen code on 'F' key pressed.
