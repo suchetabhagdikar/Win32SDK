@@ -1,10 +1,11 @@
 #include <Windows.h>
-BOOL gbFullScreen;
+BOOL gbFullScreen = false;															
 LRESULT CALLBACK WndProc(HWND,UINT,WPARAM,LPARAM);
 HWND ghwnd;
 //Global variable Declarations
-DWORD dwStyle;
-WINDOWPLACEMENT wpPrev = { sizeof(WINDOWPLACEMENT) };
+DWORD dwStyle;																		
+WINDOWPLACEMENT wpPrev = { sizeof(WINDOWPLACEMENT) };								
+HBRUSH ghBrush;
 
 int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpszCmdLine, int nCmdShow)
 {
@@ -45,7 +46,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpszCmdLi
 
 	ShowWindow(hwnd,nCmdShow);
 	UpdateWindow(hwnd);
-
+	ghwnd = hwnd;
 	//message Loop
 	while (GetMessage(&msg, NULL, 0, 0))
 	{
@@ -60,10 +61,10 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpszCmdLi
 //WndProc()
 LRESULT CALLBACK WndProc(HWND hwnd, UINT iMsg, WPARAM wParam, LPARAM lParam)
 {
-	//Function Prototype
+//	Function Prototype
 	void ToggleFullScreen(void);
 
-	//code
+//	code
 	switch (iMsg)
 	{
 	case WM_CREATE:
@@ -75,17 +76,13 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT iMsg, WPARAM wParam, LPARAM lParam)
 		case VK_ESCAPE:
 			DestroyWindow(hwnd);
 			break;
+
 		case 0x46:			//for 'f' or 'F'
-			if (gbFullScreen == false)
-			{
-				ToggleFullScreen();
-				gbFullScreen = true;
-			}
-			else
-			{
-				ToggleFullScreen();
-				gbFullScreen = false; 
-			}
+				ToggleFullScreen();		
+			
+			break;
+		case WM_DESTROY:
+			PostQuitMessage(0);
 			break;
 		default:
 			break;
@@ -96,47 +93,65 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT iMsg, WPARAM wParam, LPARAM lParam)
 	return(DefWindowProc(hwnd,iMsg,wParam,lParam));
 }
 
-//ToggleFullScreen()
+
+
 void ToggleFullScreen(void)
 {
-	//variable declarations
-	MONITORINFO mi;
-
-	//code
+	BOOL bIsWindowPlacement;
+	BOOL bIsMonitorInfo;	
 	if (gbFullScreen == false)
 	{
-		/*dwStyle = GetWindowLong(ghwnd, GWL_STYLE);
-		if (dwStyle & WS_OVERLAPPEDWINDOW)
+		gbFullScreen = true;
+	    dwStyle = GetWindowLong(ghwnd, GWL_STYLE);
+
+	
+		if (dwStyle & WS_OVERLAPPEDWINDOW)					
 		{
-			mi = { sizeof(MONITORINFO) };
-			if (GetWindowPlacement(ghwnd, &wpPrev) && GetMonitorInfo(MonitorFromWindow(ghwnd, MONITORINFOF_PRIMARY), &mi))
+			
+			bIsWindowPlacement = GetWindowPlacement(ghwnd, &wpPrev);			
+			HMONITOR hMonitor = MonitorFromWindow(ghwnd, MONITORINFOF_PRIMARY);
+	
+			MONITORINFO mi;										//variable to Structure of MONITORINFO
+			mi.cbSize = { sizeof(MONITORINFO) };				//This is size of MONITORINFO
+
+			bIsMonitorInfo = GetMonitorInfo(hMonitor, &mi);
+
+
+			if (bIsWindowPlacement == TRUE && bIsMonitorInfo == TRUE)
 			{
-				SetWindowLong(ghwnd,GWL_STYLE,dwStyle & ~WS_OVERLAPPEDWINDOW);
-				SetWindowPos(ghwnd,HWND_TOP,mi.rcMonitor.left,mi.rcMonitor.top,mi.rcMonitor.right - mi.rcMonitor.left,mi.rcMonitor.bottom - mi.rcMonitor.top,SWP_NOZORDER | SWP_FRAMECHANGED);
+
+		SetWindowLong(ghwnd, GWL_STYLE, dwStyle &  ~WS_OVERLAPPEDWINDOW);
+				SetWindowPos(ghwnd, 
+							 HWND_TOP,
+							 mi.rcMonitor.left,
+						     mi.rcMonitor.top,
+							 mi.rcMonitor.right - mi.rcMonitor.left,
+					         mi.rcMonitor.bottom - mi.rcMonitor.top,
+					         SWP_NOZORDER | SWP_FRAMECHANGED);
+	
 			}
-		}*/
-		dwStyle = GetWindowLong(ghwnd, GWL_STYLE);
-		if (dwStyle & WS_OVERLAPPEDWINDOW)
-		{
-			mi = { sizeof(MONITORINFO) };
-			if (GetWindowPlacement(ghwnd, &wpPrev) && GetMonitorInfo(MonitorFromWindow(ghwnd, MONITORINFOF_PRIMARY), &mi))
-			{
-				SetWindowLong(ghwnd, GWL_STYLE, dwStyle & ~WS_OVERLAPPEDWINDOW);
-				SetWindowPos(ghwnd, HWND_TOP, mi.rcMonitor.left, mi.rcMonitor.top, mi.rcMonitor.right - mi.rcMonitor.left, mi.rcMonitor.bottom - mi.rcMonitor.top, SWP_NOZORDER | SWP_FRAMECHANGED);
-			}
+		
+			
 		}
 		ShowCursor(FALSE);
 	}
-	else
-	{
-		//code
-		SetWindowLong(ghwnd, GWL_STYLE, dwStyle | WS_OVERLAPPEDWINDOW);
-		SetWindowPlacement(ghwnd,&wpPrev);
-		SetWindowPos(ghwnd,HWND_TOP,0,0,0,0,SWP_NOMOVE | SWP_NOSIZE |SWP_NOOWNERZORDER |SWP_NOZORDER | SWP_FRAMECHANGED);
 
+	else                                 
+	{
+		gbFullScreen = false;
+		SetWindowLong(ghwnd, GWL_STYLE, dwStyle &  WS_OVERLAPPEDWINDOW);
+		SetWindowPlacement(ghwnd,&wpPrev);												
+		SetWindowPos(ghwnd,HWND_TOP,0,0,0,0,SWP_NOMOVE | SWP_NOSIZE | SWP_NOOWNERZORDER |SWP_NOZORDER |SWP_FRAMECHANGED);
 		ShowCursor(TRUE);
 	}
+	
 }
+
+
+
+
+
+
 
 
 

@@ -1,0 +1,8 @@
+Assignments-
+
+1.Program one showing all WM message with MessageBox
+
+2.Prohram to change colors of screen (such as Red,Green,Blue,Yellow,Cyan,FullScreen etc) on 
+particular color first character key pressed.
+
+3.Program to show Full Screen with Black Window using ToggleFullScreenFunction.

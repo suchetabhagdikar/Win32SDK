@@ -1,7 +1,7 @@
 #include<Windows.h>
 //Globval declarations
 LRESULT CALLBACK WndProc(HWND,UINT,WPARAM,LPARAM);
-BOOL gbFullScreen;
+BOOL gbFullScreen = false;
 DWORD dwStyle;
 HWND ghwnd;
 void ToggleFullScreen();
@@ -45,7 +45,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpszCmdLi
 
 	ShowWindow(hwnd, nCmdShow);
 	UpdateWindow(hwnd);
-
+	ghwnd = hwnd;
 	//message loop
 	while (GetMessage(&msg, NULL, 0, 0))
 	{
@@ -113,18 +113,13 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT iMsg, WPARAM wParam, LPARAM lParam)
 		InvalidateRect(hwnd,NULL,TRUE);
 		break;
 
-	case 0x46:
-		giPaintFlag = 9;
-		if (gbFullScreen == false)
-		{
-			ToggleFullScreen();
-			gbFullScreen = true;
-		}
-		else
-		{
-			ToggleFullScreen();
-			gbFullScreen = false;
-		}
+	case 0x46:																						 //'f' or 'F' for FullScreen
+//		giPaintFlag = 9;
+		ToggleFullScreen();
+		break;
+
+	case VK_ESCAPE:
+		DestroyWindow(hwnd);
 		break;
 
 	default:
@@ -175,12 +170,12 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT iMsg, WPARAM wParam, LPARAM lParam)
 			hBrush = CreateSolidBrush(RGB(255,255,0));
 			FillRect(hdc,&rc,hBrush);
 		}
-
-		//hBrush = CreateSolidBrush(RGB(0, 0, 255));
-		//FillRect(hdc, &rc, hBrush);
+		
 		DeleteObject(hBrush);
 		EndPaint(hwnd,&ps);
 		break;
+
+	
 
 	case WM_DESTROY:
 		PostQuitMessage(0);
@@ -189,35 +184,68 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT iMsg, WPARAM wParam, LPARAM lParam)
 	return(DefWindowProc(hwnd,iMsg,wParam,lParam));
 }
 
-void ToggleFullScreen()
-{
-	//variable declarations
-	MONITORINFO mi;
+	
 
-	//code
+
+void ToggleFullScreen(void)
+{
+	BOOL bIsWindowPlacement;
+	BOOL bIsMonitorInfo;	
 	if (gbFullScreen == false)
 	{
-		if (dwStyle & WS_OVERLAPPEDWINDOW)
-		{
-			dwStyle = GetWindowLong(ghwnd, GWL_STYLE);
-			mi = { sizeof(MONITORINFO) };
+		gbFullScreen = true;
+		dwStyle = GetWindowLong(ghwnd, GWL_STYLE);
 
-			if (GetWindowPlacement(ghwnd, &wpPrev) && GetMonitorInfo(MonitorFromWindow(ghwnd, MONITORINFOF_PRIMARY), &mi))
+		
+		if (dwStyle & WS_OVERLAPPEDWINDOW)				
+		{
+				bIsWindowPlacement = GetWindowPlacement(ghwnd, &wpPrev);			
+			HMONITOR hMonitor = MonitorFromWindow(ghwnd, MONITORINFOF_PRIMARY);
+
+			MONITORINFO mi;									
+			mi.cbSize = { sizeof(MONITORINFO) };				
+
+			bIsMonitorInfo = GetMonitorInfo(hMonitor, &mi);
+
+		
+
+			if (bIsWindowPlacement == TRUE && bIsMonitorInfo == TRUE)
 			{
-				SetWindowLong(ghwnd,GWL_STYLE,dwStyle & ~WS_OVERLAPPEDWINDOW);
-				SetWindowPos(ghwnd, HWND_TOP,mi.rcMonitor.left,mi.rcMonitor.top,mi.rcMonitor.right - mi.rcMonitor.left,mi.rcMonitor.top - mi.rcMonitor.bottom,SWP_NOZORDER | SWP_FRAMECHANGED);
+
+					SetWindowLong(ghwnd, GWL_STYLE, dwStyle &  ~WS_OVERLAPPEDWINDOW);
+	
+				SetWindowPos(ghwnd,
+					HWND_TOP,
+					mi.rcMonitor.left,
+					mi.rcMonitor.top,
+					mi.rcMonitor.right - mi.rcMonitor.left,
+					mi.rcMonitor.bottom - mi.rcMonitor.top,
+					SWP_NOZORDER | SWP_FRAMECHANGED);
+	
 			}
+
+
 		}
 		ShowCursor(FALSE);
 	}
-	else
-	{
-		SetWindowLong(ghwnd, GWL_STYLE,dwStyle | WS_OVERLAPPEDWINDOW);
-		SetWindowPlacement(ghwnd,&wpPrev);
-		SetWindowPos(ghwnd,HWND_TOP,0,0,0,0,SWP_NOMOVE | SWP_NOSIZE |SWP_NOOWNERZORDER | SWP_NOZORDER | SWP_FRAMECHANGED);
 
+	else                                 
+	{
+		gbFullScreen = false;
+		SetWindowLong(ghwnd, GWL_STYLE, dwStyle &  WS_OVERLAPPEDWINDOW);
+		SetWindowPlacement(ghwnd, &wpPrev);												
+		SetWindowPos(ghwnd, HWND_TOP, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE | SWP_NOOWNERZORDER | SWP_NOZORDER | SWP_FRAMECHANGED);
 		ShowCursor(TRUE);
 	}
 
-
 }
+
+
+
+
+
+
+
+
+
+
